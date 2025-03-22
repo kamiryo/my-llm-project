@@ -1,0 +1,49 @@
+version: "3.8"
+
+services:
+  ollama:
+    build:
+      context: ollama
+      dockerfile: Dockerfile
+    image: ollama-custom-gpu
+    container_name: ollama-gpu
+    ports:
+      - "11434:11434"
+    networks:
+      - llm-net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  openwebui:
+    build:
+      context: openwebui
+      dockerfile: Dockerfile
+    image: openwebui-gpu
+    container_name: open-webui
+    ports:
+      - "3000:8080"
+    environment:
+      - OLLAMA_API_BASE_URL=http://ollama:11434/api
+      - BACKEND_API_URL=http://ollama:11434
+    networks:
+      - llm-net
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+volumes:
+  open-webui-data:
+
+networks:
+  llm-net:
+    driver: bridge
