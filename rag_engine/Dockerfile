@@ -8,4 +8,5 @@ COPY . /app
 RUN apt-get update && apt-get install -y unzip \
     && pip install --no-cache-dir -r requirements.txt
 
-CMD ["python", "app.py"]
+#CMD ["python", "app.py"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5001"]

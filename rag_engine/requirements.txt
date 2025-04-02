@@ -2,4 +2,5 @@ langchain
 langchain-community
 sentence-transformers
 faiss-cpu
-flask
+fastapi
+uvicorn

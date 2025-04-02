@@ -10,6 +10,11 @@ services:
       - "5001:5001"
     environment:
       - PYTHONUNBUFFERED=1
+    networks:
+      - llm-net
+    depends_on:
+      ollama:
+        condition: service_healthy
   ollama:
     build:
       context: ollama
@@ -44,6 +49,8 @@ services:
     environment:
       - OLLAMA_API_BASE_URL=http://ollama:11434/api
       - BACKEND_API_URL=http://ollama:11434
+      - OPENAI_API_BASE_URL=http://rag-engine:5001/v1
+      - WEBUI_AUTH=False
     networks:
       - llm-net
     depends_on:
