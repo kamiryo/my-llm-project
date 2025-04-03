@@ -53,13 +53,28 @@ async def get_models(request: Request):
 @app.post("/v1/chat/completions")
 async def chat_with_rag(request: Request):
     body = await request.json()
-    query = body["messages"][-1]["content"]  # ユーザーの最新質問を取得
+    messages = body["messages"]
     use_metadata = body.get("use_metadata", True)
 
-    # ベクトル検索
+    # 最新のユーザー発言のみで検索
+    query = messages[-1]["content"]
     docs = rag.search(query=query, k=3)
-    # プロンプト構築
-    prompt = rag.build_prompt(query=query, docs=docs, use_metadata=use_metadata)
+    context = rag.build_prompt(query=query, docs=docs, use_metadata=use_metadata)
+
+    # 会話履歴をフォーマット
+    chat_history = ""
+    for message in messages:
+        role = message["role"]
+        content = message["content"]
+        if role == "user":
+            chat_history += f"ユーザー: {content}\n"
+        elif role == "assistant":
+            chat_history += f"アシスタント: {content}\n"
+
+    # 履歴と検索結果を統合したプロンプトを作成
+    prompt = f"{chat_history}\n---\n以下は知識ベースの情報です。\n{context}"
+
+    print(f"🚄 Ollama行きのプロンプトは以下の通りです---\n{prompt}")
 
     # Ollamaへプロンプトを渡して生成（ストリーミング対応）
     response = requests.post(
