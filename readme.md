@@ -42,17 +42,16 @@
 ## 使用方法
 
 1. モデルファイルを取得し、`ollama/models/` ディレクトリに配置します：
-   - `cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-Q4_K_M.gguf`
+   - [`cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-Q4_K_M.gguf`](
+https://huggingface.co/mmnga/cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-gguf/blob/main/cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-Q4_K_M.gguf)
 
 2. Docker Compose でサービスを起動します：
    ```bash
    docker-compose up -d
    ```
 
-3. 以下のサービスにアクセスできます：
+3. ローカルのブラウザより以下のサービスにアクセスできます：
    - Open WebUI: http://localhost:3000
-   - RAG API: http://localhost:5001
-   - Ollama API: http://localhost:11434
 
 ## RAG機能について
 
