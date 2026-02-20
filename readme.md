@@ -1,84 +1,168 @@
 # my-llm-project
 
-このプロジェクトは、LLM（大規模言語モデル）を使用したチャットアプリケーションと、RAG（Retrieval Augmented Generation）機能を組み合わせたシステムを構築することを目的としています。
+このプロジェクトは、ローカル環境で動作するLLM（大規模言語モデル）のチャットアプリケーションと、RAG（Retrieval Augmented Generation：検索拡張生成）機能を組み合わせたシステムです。
 
 ## 概要
 
-このプロジェクトは以下の3つの主要コンポーネントで構成されています：
+本システムは以下の3つのコンポーネントで構成されています。すべてDocker上で動作するため、ホストPC環境を汚さずに構築可能です。
 
-1. **Ollama**: ローカルで動作するLLMサーバー（DeepSeek R1 Distill Qwen 14B 日本語モデルを使用）
-2. **Open WebUI**: OllamaのWebインターフェース
-3. **RAG Engine**: 文書検索と生成を組み合わせたシステム
+1. **Ollama**: ローカルLLMサーバー（モデル：`DeepSeek R1 Distill Qwen 14B` 日本語版）
+2. **Open WebUI**: ChatGPTライクな高機能Webインターフェース
+3. **RAG Engine**: 独自の文書をベクトルデータベース（FAISS）から検索し、LLMに回答させるFastAPIサーバー
 
-## システム構成図
+---
 
-以下の構成図は、システム全体のアーキテクチャを表しています。各コンポーネントの連携と情報の流れを示しています。
+## ⚠️ 初回構築時の重要なお知らせ（必ずお読みください）
+
+このシステムはローカルでAIを動かす性質上、**初回のセットアップに非常に時間がかかります。**
+途中で止まっているように見えても、裏でダウンロードやコピーが進行していることが多いため、気長にお待ちください。
+
+* **モデルファイルのダウンロード（約9GB）**: 回線速度に依存しますが、数十分かかる場合があります。
+* **RAGエンジンの初回ビルド（約3~5GB）**: PyTorchやCUDAなどの巨大なライブラリをダウンロード・インストールするため、**10分〜30分程度**かかります（PCスペックと回線に依存）。
+* **AIモデルのDocker内への展開（最長1時間）**: Docker for Windowsの仕様上、Windows側のフォルダにある9GBのモデルファイルをDocker内部の専用領域にコピーする処理が行われます。この処理中はチャットが応答しません。**進捗は `docker logs ollama-gpu -f` コマンドで確認でき、100%になるまで数十分〜1時間ほどお待ちいただく必要があります。（初回のみ）**
+
+---
+
+## 💻 前提条件（必須環境）
+
+このシステムを動かすには、以下のソフトウェアとハードウェアが必要です。
+
+* **OS**: Windows (WSL2環境推奨), macOS, Linux
+* **GPU**: NVIDIA GPU (VRAM 6GB以上を強く推奨)
+* **ソフトウェア**:
+  * [Docker Desktop](https://www.docker.com/products/docker-desktop) または Docker Engine がインストールされ、起動していること
+  * Dockerの `NVIDIA Container Toolkit` が設定済みであること（GPUを使用する場合）
+  * `git` コマンドが使用可能なこと
+
+---
+
+## 🚀 セットアップ手順（初心者向け完全ガイド）
+
+### Step 1: リポジトリのクローンと移動
+
+ターミナル（Windowsの場合はPowerShellやコマンドプロンプト）を開き、以下のコマンドを実行します。
+
+```bash
+# プロジェクトをダウンロード
+git clone <このリポジトリのURL>
+# フォルダへ移動
+cd my-llm-project
+```
+
+### Step 2: LLMモデルファイルのダウンロードと配置
+
+AIの「脳」となるモデルファイル（約9GB）を手動でダウンロードします。
+
+1. 以下のリンクからモデルファイル（`.gguf`形式）をダウンロードします。
+   ▶ [cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-Q4_K_M.gguf をダウンロード](https://huggingface.co/mmnga/cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-gguf/resolve/main/cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-Q4_K_M.gguf)
+2. ダウンロードしたファイルを、このプロジェクト内の `ollama/models/` フォルダの中に移動させます。
+
+> **完了確認**: `my-llm-project/ollama/models/cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-Q4_K_M.gguf` という配置になっていればOKです。
+
+### Step 3: Dockerサービスの起動
+
+すべての準備が整ったら、システムを起動します。
+
+```bash
+docker-compose up -d --build
+```
+
+**【重要】このコマンドを実行した後の待ち時間について**
+* コマンド実行直後から、RAGエンジンの環境構築（PyTorchなどの巨大なファイルのダウンロード）が始まります。
+* **ターミナルの文字の動きが止まっても、エラーが出ていなければ（赤字等で止まらなければ）そのまま10〜30分ほど放置してください。**
+* `Container open-webui Started` のようなメッセージが出れば起動完了です。
+
+### Step 4: アプリケーションへのアクセス
+
+ブラウザを開き、以下のURLにアクセスしてください。
+
+▶ **[http://localhost:3000](http://localhost:3000)**
+
+* 初回アクセス時に、管理者のアカウント作成（サインアップ）画面が表示される場合があります。お好きなメールアドレスとパスワードで登録してください（ローカル環境なので外部には送信されません）。
+* 画面上部のモデル選択で `my-deepseek-model` を選択し、チャットを開始できます。
+
+---
+
+## 🛠 トラブルシューティング（よくあるエラーと解決法）
+
+### Q1. `$'\r': command not found` または `exec /entrypoint.sh: no such file or directory` というエラーが出てOllamaが起動しない（Windowsの方）
+
+**原因**: WindowsでGitクローンした際、ファイルの改行コードが「CRLF」に変換されてしまい、LinuxベースのDockerコンテナがスクリプトを実行できなくなっているためです。
+**解決法**: `ollama/entrypoint.sh` ファイルをVSCodeなどのエディタで開き、右下の改行コードを「CRLF」から「LF」に変更して上書き保存してください。その後、`docker-compose up -d --build` を再度実行します。
+（※現在はこの問題を自動で防ぐための `.gitattributes` ファイルを追加済みです）
+
+### Q2.ポートが既に使用されている（`port is already allocated`）と言われる
+
+**原因**: 過去に起動した別のDockerコンテナ（Difyなど）が同じポート（3000 や 5001）を使用しているためです。
+**解決法**: ポートを使用しているコンテナを停止してください。
+```bash
+# 稼働中のコンテナ一覧を確認
+docker ps
+# 該当のコンテナを停止（例：dify-webというコンテナの場合）
+docker stop dify-web
+# 当システムを再起動
+docker-compose up -d
+```
+
+### Q3. チャット画面は開けるが、いつまで待ってもAIが返答しない（考え中から進まない）
+
+**原因**: 初回構築時、9GBの巨大なAIモデルをWindows側からDockerの内部ストレージ（Volume）へコピーする作業が裏で進行中です。このコピーが完了するまではAIは応答できません。
+**解決法**: 別のターミナル（PowerShell等）を開き、以下のいずれかのコマンドを実行して状況を確認してください。
+
+**① 進捗をリアルタイムで見守る場合**:
+```bash
+docker logs ollama-gpu -f
+```
+`copying file sha256:... 15%` のようなログが流れていれば正常です。これが `100%` になり `Model created successfully!` と表示されるまで放置してください（PCスペックにより30分〜1時間かかります）。
+
+**② コピーが完了したか一瞬で確認する場合**:
+```bash
+docker exec ollama-gpu ollama list
+```
+実行結果に `my-deepseek-model:latest` と表示されれば、コピー処理は完全に終わっておりAIの準備は完了しています。（何も表示されない場合はまだ裏で処理中です）
+
+### Q4. 「モデルが見つかりません」またはAIが返答しない（上記Q3ではない場合）
+
+**原因**: ステップ2のモデルファイル配置場所が間違っているか、ファイル名が完全に一致していない可能性があります。
+**解決法**: `ollama/models/` の中に `cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-Q4_K_M.gguf` という名前でファイルが保存されているか、拡張子が `.gguf.txt` などになっていないか確認してください。
+
+---
+
+## 🧠 RAG機能について
+
+RAG Engineは、FAISSベクトルデータベースを使用して効率的な検索を行います。
+
+* 日本語の検索クエリに対応（`multilingual-e5-large` 埋め込みモデル使用）
+* メタデータによるフィルタリング機能
+* サンプルのナレッジ（`faiss_data` フォルダ）には、育児休暇やフレックスなどの仮の社内規則データが入力されています。
+
+システム構成図は以下の通りです。
 
 ![システム構成図](構成図.png)
 
-## ディレクトリ構造
+---
 
-- `docker-compose.yml`: Docker Composeの設定ファイル
-- `ollama/`: Ollama関連のファイル
-  - `Dockerfile`: Ollamaのカスタムイメージ設定
-  - `Modelfile`: DeepSeek日本語モデルの設定
-  - `entrypoint.sh`: コンテナ起動時の初期化スクリプト
-  - `models/`: モデルファイル配置用ディレクトリ（*.gguf）
-- `openwebui/`: Open WebUI関連のファイル
-  - `Dockerfile`: Open WebUIのカスタムイメージ設定
-- `rag_engine/`: RAG機能を提供するFastAPIサーバー
-  - `app.py`: メインアプリケーション（FastAPI）
-  - `rag_engine.py`: RAG機能の中核ロジック
-  - `requirements.txt`: 依存パッケージリスト
-  - `Dockerfile`: RAGエンジンのイメージ設定
-- `faiss_data/`: FAISSベクトルデータベース保存用ディレクトリ（.gitignore対象）
+## 💡 TIPS: 別のLLMモデルに変更する方法
 
-## 前提条件
+使用するAIモデル（`.gguf` ファイル）を変更したい場合は、以下の手順で設定を変更できます。
 
-- Docker と Docker Compose がインストールされていること
-- NVIDIA GPU と適切なドライバーがインストールされていること
-- Docker の NVIDIA Container Toolkit が設定されていること
-
-## 使用方法
-
-1. モデルファイルを取得し、`ollama/models/` ディレクトリに配置します：
-   - [`cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-Q4_K_M.gguf`](
-https://huggingface.co/mmnga/cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-gguf/blob/main/cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-Q4_K_M.gguf)
-
-2. Docker Compose でサービスを起動します：
+1. **新しいモデルの配置**
+   使いたいモデルファイル（例：`new-model.gguf`）をダウンロードし、`ollama/models/` フォルダの中に配置します。
+2. **Modelfile の書き換え**
+   `ollama/Modelfile` をテキストエディタで開き、1行目のファイル名を変更します。
+   *変更前*: `FROM /import_models/cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-Q4_K_M.gguf`
+   *変更後*: `FROM /import_models/new-model.gguf`
+   （※モデルに合わせて `TEMPLATE` や `SYSTEM` プロンプトも書き換えるとより精度が上がります）
+3. **entrypoint.sh の変更（任意）**
+   必要であれば `ollama/entrypoint.sh` 内のモデル名（`my-deepseek-model` の部分）を任意の名前に変更します。
+   * 例: `ollama create new-model-name -f /Modelfile`
+4. **コンテナの再ビルド**
+   設定を変更したら、一度Ollamaコンテナを削除して再ビルドします。
    ```bash
-   docker-compose up -d
+   # Ollamaコンテナの停止と削除
+   docker stop ollama-gpu
+   docker rm ollama-gpu
+   # 再ビルドと起動
+   docker-compose up -d --build ollama
    ```
-
-3. ローカルのブラウザより以下のサービスにアクセスできます：
-   - Open WebUI: http://localhost:3000
-
-## RAG機能について
-
-RAG Engineは、FAISSベクトルデータベースを使用して効率的な検索を行い、以下の特徴を持っています：
-
-- 日本語の検索クエリに対応（multilingual-e5-large埋め込みモデル使用）
-- メタデータによるフィルタリング機能
-- OpenAI互換APIの提供
-
-サンプルのRAGナレッジベース(faiss_data)には以下のようなデータが含まれています：
-
-```python
-texts = [
-    "育児休暇制度：最長1年間の取得が可能です。",
-    "フレックス制度：10:00〜15:00をコアタイムとします。",
-    "育児休暇：最長4年間取得可能。年に1回更新のための面談が必要。",
-    "フレックスタイム：基本9:45〜14:30をコアとしています。"
-]
-metadatas = [
-    {"company": "A", "source": "https://intra.a社.jp/rules育休"},
-    {"company": "A", "source": "https://intra.a社.jp/rulesフレックス"},
-    {"company": "B", "source": "https://intra.b社.jp/rules育休"},
-    {"company": "B", "source": "https://intra.b社.jp/rulesフレックス"}
-]
-```
-
-## 注意事項
-
-- モデルファイル（*.gguf）とベクトルデータベース（faiss_data/）はGit管理対象外です
-- GPUを使用しない環境では、`docker-compose.yml`の`deploy`セクションを修正してください
+   ※変更後は再度「Docker内へのモデル展開（コピー処理）」が行われるため、Q3の通り待ち時間が発生します。

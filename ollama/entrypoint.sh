@@ -14,7 +14,7 @@ echo "OLLAMA server is ready!"
 # モデルが存在するか確認
 if ! ollama list | grep -q "my-deepseek-model"; then
     echo "Creating model..."
-    ollama create my-deepseek-model -f /root/.ollama/Modelfile
+    ollama create my-deepseek-model -f /Modelfile
     echo "Model created successfully!"
 else
     echo "Model already exists!"

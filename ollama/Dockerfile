@@ -5,10 +5,10 @@ FROM ollama/ollama:latest
 RUN apt-get update && apt-get install -y curl vim && rm -rf /var/lib/apt/lists/*
 
 # モデルファイルをコピー
-COPY ./models /root/.ollama/models
+
 
 # Modelfile をコピー
-COPY ./Modelfile /root/.ollama/Modelfile
+COPY ./Modelfile /Modelfile
 
 # API のポートを開放
 EXPOSE 11434

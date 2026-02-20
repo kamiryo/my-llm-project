@@ -1,7 +1,7 @@
 # rag_engine/rag_engine.py
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain.schema import Document
+from langchain_core.documents import Document
 
 class RAGEngine:
     def __init__(self, faiss_path: str):

@@ -5,7 +5,7 @@ services:
     build: ./rag_engine
     container_name: rag-engine
     volumes:
-      - ./faiss_data:/app/faiss_data  # ホストのFAISSデータをマウント
+      - ./faiss_data:/app/faiss_data # ホストのFAISSデータをマウント
     ports:
       - "5001:5001"
     environment:
@@ -31,9 +31,12 @@ services:
           devices:
             - driver: nvidia
               count: 1
-              capabilities: [gpu]
+              capabilities: [ gpu ]
+    volumes:
+      - ./ollama/models:/import_models
+      - ollama_data:/root/.ollama
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      test: [ "CMD", "curl", "-f", "http://localhost:11434/api/tags" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -59,6 +62,8 @@ services:
 
 volumes:
   open-webui-data:
+  ollama_data:
+
 
 networks:
   llm-net:
