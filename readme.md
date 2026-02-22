@@ -6,7 +6,7 @@
 
 本システムは以下の3つのコンポーネントで構成されています。すべてDocker上で動作するため、ホストPC環境を汚さずに構築可能です。
 
-1. **Ollama**: ローカルLLMサーバー（モデル：`DeepSeek R1 Distill Qwen 14B` 日本語版）
+1. **Ollama**: ローカルLLMサーバー（モデル：`Nemotron-Nano-9B-v2-Japanese`）
 2. **Open WebUI**: ChatGPTライクな高機能Webインターフェース
 3. **RAG Engine**: 独自の文書をベクトルデータベース（FAISS）から検索し、LLMに回答させるFastAPIサーバー
 
@@ -17,9 +17,9 @@
 このシステムはローカルでAIを動かす性質上、**初回のセットアップに非常に時間がかかります。**
 途中で止まっているように見えても、裏でダウンロードやコピーが進行していることが多いため、気長にお待ちください。
 
-* **モデルファイルのダウンロード（約9GB）**: 回線速度に依存しますが、数十分かかる場合があります。
+* **モデルファイルのダウンロード（約5.5GB）**: 回線速度に依存しますが、数十分かかる場合があります。
 * **RAGエンジンの初回ビルド（約3~5GB）**: PyTorchやCUDAなどの巨大なライブラリをダウンロード・インストールするため、**10分〜30分程度**かかります（PCスペックと回線に依存）。
-* **AIモデルのDocker内への展開（最長1時間）**: Docker for Windowsの仕様上、Windows側のフォルダにある9GBのモデルファイルをDocker内部の専用領域にコピーする処理が行われます。この処理中はチャットが応答しません。**進捗は `docker logs ollama-gpu -f` コマンドで確認でき、100%になるまで数十分〜1時間ほどお待ちいただく必要があります。（初回のみ）**
+* **AIモデルのDocker内への展開（最長1時間）**: Docker for Windowsの仕様上、Windows側のフォルダにある5.5GBのモデルファイルをDocker内部の専用領域にコピーする処理が行われます。この処理中はチャットが応答しません。**進捗は `docker logs ollama-gpu -f` コマンドで確認でき、100%になるまで数十分〜1時間ほどお待ちいただく必要があります。（初回のみ）**
 
 ---
 
@@ -51,13 +51,13 @@ cd my-llm-project
 
 ### Step 2: LLMモデルファイルのダウンロードと配置
 
-AIの「脳」となるモデルファイル（約9GB）を手動でダウンロードします。
+AIの「脳」となるモデルファイル（約5.5GB）を手動でダウンロードします。
 
 1. 以下のリンクからモデルファイル（`.gguf`形式）をダウンロードします。
-   ▶ [cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-Q4_K_M.gguf をダウンロード](https://huggingface.co/mmnga/cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-gguf/resolve/main/cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-Q4_K_M.gguf)
+   ▶ [NVIDIA-Nemotron-Nano-9B-v2-Japanese-Q4_K_M.gguf をダウンロード](https://huggingface.co/mmnga/Nemotron-Nano-9B-v2-Japanese-gguf/resolve/main/NVIDIA-Nemotron-Nano-9B-v2-Japanese-Q4_K_M.gguf)
 2. ダウンロードしたファイルを、このプロジェクト内の `ollama/models/` フォルダの中に移動させます。
 
-> **完了確認**: `my-llm-project/ollama/models/cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-Q4_K_M.gguf` という配置になっていればOKです。
+> **完了確認**: `my-llm-project/ollama/models/NVIDIA-Nemotron-Nano-9B-v2-Japanese-Q4_K_M.gguf` という配置になっていればOKです。
 
 ### Step 3: Dockerサービスの起動
 
@@ -79,7 +79,7 @@ docker-compose up -d --build
 ▶ **[http://localhost:3000](http://localhost:3000)**
 
 * 初回アクセス時に、管理者のアカウント作成（サインアップ）画面が表示される場合があります。お好きなメールアドレスとパスワードで登録してください（ローカル環境なので外部には送信されません）。
-* 画面上部のモデル選択で `my-deepseek-model` を選択し、チャットを開始できます。
+* 画面上部のモデル選択で `my-nemotron-model` を選択し、チャットを開始できます。
 
 ---
 
@@ -106,7 +106,7 @@ docker-compose up -d
 
 ### Q3. チャット画面は開けるが、いつまで待ってもAIが返答しない（考え中から進まない）
 
-**原因**: 初回構築時、9GBの巨大なAIモデルをWindows側からDockerの内部ストレージ（Volume）へコピーする作業が裏で進行中です。このコピーが完了するまではAIは応答できません。
+**原因**: 初回構築時、5.5GBの巨大なAIモデルをWindows側からDockerの内部ストレージ（Volume）へコピーする作業が裏で進行中です。このコピーが完了するまではAIは応答できません。
 **解決法**: 別のターミナル（PowerShell等）を開き、以下のいずれかのコマンドを実行して状況を確認してください。
 
 **① 進捗をリアルタイムで見守る場合**:
@@ -119,12 +119,17 @@ docker logs ollama-gpu -f
 ```bash
 docker exec ollama-gpu ollama list
 ```
-実行結果に `my-deepseek-model:latest` と表示されれば、コピー処理は完全に終わっておりAIの準備は完了しています。（何も表示されない場合はまだ裏で処理中です）
+実行結果に `my-nemotron-model:latest` と表示されれば、コピー処理は完全に終わっておりAIの準備は完了しています。（何も表示されない場合はまだ裏で処理中です）
 
 ### Q4. 「モデルが見つかりません」またはAIが返答しない（上記Q3ではない場合）
 
 **原因**: ステップ2のモデルファイル配置場所が間違っているか、ファイル名が完全に一致していない可能性があります。
-**解決法**: `ollama/models/` の中に `cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-Q4_K_M.gguf` という名前でファイルが保存されているか、拡張子が `.gguf.txt` などになっていないか確認してください。
+**解決法**: `ollama/models/` の中に `NVIDIA-Nemotron-Nano-9B-v2-Japanese-Q4_K_M.gguf` という名前でファイルが保存されているか、拡張子が `.gguf.txt` などになっていないか確認してください。
+
+### Q5. 起動時に `llama runner process has terminated: exit status 2` とエラーが出てOllamaがクラッシュする
+
+**原因**: `Nemotron-Nano-9B-v2` が採用している最新のハイブリッドアーキテクチャ（`nemotron_h`）に起因する問題です。このアーキテクチャはOllamaの最新版（`0.14`以降等の内部 `llama.cpp` エンジン）で読み込むと、浮動小数点例外（SIGFPE）を引き起こす既知のバグ（リグレッション）が存在します。
+**解決法**: このバグを回避するため、本プロジェクトでは意図的に**Nemotronモデルが安定して動作する最後のバージョンである `ollama:0.13.3` にバージョンを固定（ピン留め）**しています。ご自身で `ollama/Dockerfile` のバージョンを `latest` などに書き換えるとクラッシュしますので、当面の間はダウングレードされた `0.13.3` のままご利用ください。
 
 ---
 
@@ -173,13 +178,16 @@ RAG Engineは、FAISSベクトルデータベースを使用して効率的な�
    使いたいモデルファイル（例：`new-model.gguf`）をダウンロードし、`ollama/models/` フォルダの中に配置します。
 2. **Modelfile の書き換え**
    `ollama/Modelfile` をテキストエディタで開き、1行目のファイル名を変更します。
-   *変更前*: `FROM /import_models/cyberagent-DeepSeek-R1-Distill-Qwen-14B-Japanese-Q4_K_M.gguf`
+   *変更前*: `FROM /import_models/NVIDIA-Nemotron-Nano-9B-v2-Japanese-Q4_K_M.gguf`
    *変更後*: `FROM /import_models/new-model.gguf`
    （※モデルに合わせて `TEMPLATE` や `SYSTEM` プロンプトも書き換えるとより精度が上がります）
 3. **entrypoint.sh の変更（任意）**
-   必要であれば `ollama/entrypoint.sh` 内のモデル名（`my-deepseek-model` の部分）を任意の名前に変更します。
+   必要であれば `ollama/entrypoint.sh` 内のモデル名（`my-nemotron-model` の部分）を任意の名前に変更します。
    * 例: `ollama create new-model-name -f /Modelfile`
-4. **コンテナの再ビルド**
+4. **Dockerfile の Ollama バージョン確認**
+   本プロジェクトでは `NVIDIA-Nemotron-Nano-9B-v2` モデルのクラッシュバグ（`Q5`参照）を回避するため、`ollama/Dockerfile` のベースイメージを意図的に古い `ollama/ollama:0.13.3` に固定しています。
+   もし別のモデルに変更して上手く動かない場合や、最新のOllamaの新機能を使いたい場合は、`FROM ollama/ollama:latest` に戻してから再ビルドしてください。
+5. **コンテナの再ビルド**
    設定を変更したら、一度Ollamaコンテナを削除して再ビルドします。
    ```bash
    # Ollamaコンテナの停止と削除
