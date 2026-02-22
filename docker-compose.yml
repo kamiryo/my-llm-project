@@ -57,6 +57,8 @@ services:
       - WEBUI_AUTH=False
     networks:
       - llm-net
+    volumes:
+      - open-webui-data:/app/backend/data
     depends_on:
       ollama:
         condition: service_healthy
