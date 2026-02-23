@@ -53,9 +53,11 @@ cd my-llm-project
 
 AIの「脳」となるモデルファイル（約5.5GB）を手動でダウンロードします。
 
-1. 以下のリンクからモデルファイル（`.gguf`形式）をダウンロードします。
-   ▶ [NVIDIA-Nemotron-Nano-9B-v2-Japanese-Q4_K_M.gguf をダウンロード](https://huggingface.co/mmnga/Nemotron-Nano-9B-v2-Japanese-gguf/resolve/main/NVIDIA-Nemotron-Nano-9B-v2-Japanese-Q4_K_M.gguf)
-2. ダウンロードしたファイルを、このプロジェクト内の `ollama/models/` フォルダの中に移動させます。
+1. 以下のHugging Faceのファイル一覧ページにブラウザでアクセスします。
+   ▶ [Hugging Face: Nemotron-Nano-9B-v2-Japanese-gguf (main)](https://huggingface.co/mmnga/Nemotron-Nano-9B-v2-Japanese-gguf/tree/main)
+2. ファイル一覧から `NVIDIA-Nemotron-Nano-9B-v2-Japanese-Q4_K_M.gguf` を探し、行の右側にあるダウンロードボタン（↓矢印アイコン）をクリックして手動でダウンロードしてください。
+   （※直リンクを用いたcurl等のコマンドやツールでのダウンロードはCDNのセキュリティでブロックされる可能性があるため、ブラウザをご利用ください）
+3. ダウンロードしたファイルを、このプロジェクト内の `ollama/models/` フォルダの中に移動させます。
 
 > **完了確認**: `my-llm-project/ollama/models/NVIDIA-Nemotron-Nano-9B-v2-Japanese-Q4_K_M.gguf` という配置になっていればOKです。
 
@@ -79,7 +81,9 @@ docker-compose up -d --build
 ▶ **[http://localhost:3000](http://localhost:3000)**
 
 * 初回アクセス時に、管理者のアカウント作成（サインアップ）画面が表示される場合があります。お好きなメールアドレスとパスワードで登録してください（ローカル環境なので外部には送信されません）。
-* 画面上部のモデル選択で `my-nemotron-model` を選択し、チャットを開始できます。
+* 画面上部にあるモデル選択のプルダウンから、用途に合わせて以下のいずれかのモデルを選択してチャットを開始できます。
+  * **`my-local-model`**: RAG機能（社内知識の検索）が有効になったAIモデルです。自社データに基づく回答が必要な場合はこちらを選択してください。
+  * **`my-nemotron-model:latest`**: RAG機能を通さない、純粋なLLM（AIの生身）です。一般的な会話やプログラミングの質問などはこちらが適しています。
 
 ---
 
@@ -130,6 +134,11 @@ docker exec ollama-gpu ollama list
 
 **原因**: `Nemotron-Nano-9B-v2` が採用している最新のハイブリッドアーキテクチャ（`nemotron_h`）に起因する問題です。このアーキテクチャはOllamaの最新版（`0.14`以降等の内部 `llama.cpp` エンジン）で読み込むと、浮動小数点例外（SIGFPE）を引き起こす既知のバグ（リグレッション）が存在します。
 **解決法**: このバグを回避するため、本プロジェクトでは意図的に**Nemotronモデルが安定して動作する最後のバージョンである `ollama:0.13.3` にバージョンを固定（ピン留め）**しています。ご自身で `ollama/Dockerfile` のバージョンを `latest` などに書き換えるとクラッシュしますので、当面の間はダウングレードされた `0.13.3` のままご利用ください。
+
+### Q6. Open WebUIでチャットを送信してもローディング画面のまま応答が返ってこない (エラー: 401 Unauthorized など)
+
+**原因**: WebUIの新しいバージョン（v0.8.3など）から、OpenAI互換APIに対して厳密な **Server-Sent Events (SSE) ストリーミング** フォーマットの返答が要求されるようになりました。以前の単純なJSON返答では、UI側がレスポンスを正しく解釈できずにハングアップしてしまいます。
+**解決法**: 既に本番環境の `rag_engine/app.py` にて `StreamingResponse` を用いたチャンク分割ストリーミング対応パッチを適用済みです。この問題がローカルで再発した場合は、一度 `docker-compose up -d --build rag-engine` を実行して、RAGエンジンのコンテナイメージを最新のPythonコードで再ビルドしてください。
 
 ---
 

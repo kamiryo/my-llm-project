@@ -1,5 +1,5 @@
 # OLLAMA の公式イメージをベースにする
-FROM ollama/ollama:latest
+FROM ollama/ollama:0.13.3
 
 # 必要なツールをインストール（デバッグ用、不要なら削除可）
 RUN apt-get update && apt-get install -y curl vim && rm -rf /var/lib/apt/lists/*
