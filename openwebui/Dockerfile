@@ -1,5 +1,5 @@
 # my-llm-project/openwebui/Dockerfile
-FROM ghcr.io/open-webui/open-webui:main
+FROM ghcr.io/open-webui/open-webui:v0.9.6
 
 # viをインストール
 RUN apt-get update && apt-get install -y vim && rm -rf /var/lib/apt/lists/*

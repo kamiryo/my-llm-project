@@ -85,7 +85,7 @@ async def chat_with_rag(request: Request):
         async def event_stream():
             response = requests.post(
                 "http://ollama-gpu:11434/api/generate",
-                json={"model": "my-nemotron-model:latest", "prompt": prompt},
+                json={"model": "my-qwen-model:latest", "prompt": prompt},
                 stream=True
             )
             for line in response.iter_lines(decode_unicode=True):
@@ -126,7 +126,7 @@ async def chat_with_rag(request: Request):
         # Ollamaへプロンプトを渡して生成（ストリーミングなしの通常応答）
         response = requests.post(
             "http://ollama-gpu:11434/api/generate",
-            json={"model": "my-nemotron-model:latest", "prompt": prompt},
+            json={"model": "my-qwen-model:latest", "prompt": prompt},
             stream=True
         )
 
